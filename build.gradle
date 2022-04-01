@@ -2,6 +2,8 @@ plugins {
 	id 'org.springframework.boot' version '2.6.6'
 	id 'io.spring.dependency-management' version '1.0.11.RELEASE'
 	id 'java'
+	id 'idea'
+	id "org.openapi.generator" version "5.4.0"
 }
 
 group = 'nikitaefremov'
@@ -20,4 +22,46 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+}
+
+task buildSpotifyClient(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
+	generatorName = "spring"
+	inputSpec = "$rootDir/external-api/open-api-schema.yml".toString()
+	outputDir = "$buildDir/generated/spotify".toString()
+	apiPackage = "com.spotify.api"
+	modelPackage = "com.spotify.model"
+	generateModelDocumentation = false
+	generateApiDocumentation = false
+	generateModelTests = false
+	generateApiTests = false
+	configOptions = [
+			dateLibrary: 'java8',
+			java8: 'true',
+			interfaceOnly: 'true',
+			serializableModel: 'true',
+			skipDefaultInterface: 'true',
+			useTags: 'true',
+			library: 'spring-cloud'
+	]
+	onlyIf { !file(outputDir).exists() }
+	doFirst { mkdir outputDir }
+
+}
+
+sourceSets {
+	main {
+		java {
+			srcDirs "${project.buildDir}/generated/spotify/src/main/java"
+		}
+	}
+}
+
+idea {
+	module {
+		generatedSourceDirs += file("${buildDir}/generated/spotify/src/main/java")
+	}
+}
+
+compileJava {
+	dependsOn buildSpotifyClient
 }
