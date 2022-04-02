@@ -14,9 +14,41 @@ repositories {
 	mavenCentral()
 }
 
+ext {
+	swagger_annotations_version = '2.1.13'
+	jackson_databind_nullable_version = '0.2.2'
+	swagger_annotations_version = '1.6.5'
+	swagger_models_version = '1.6.5'
+	feign_version = '11.8'
+	feign_form_version = '3.8.0'
+
+	oltu_version = '1.0.1'
+}
+
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter'
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	implementation("io.swagger:swagger-annotations:${swagger_annotations_version}")
+	implementation("io.swagger:swagger-models:${swagger_models_version}")
+	implementation 'com.google.code.findbugs:jsr305:3.0.2'
+
+//	implementation "io.swagger.core.v3:swagger-annotations:${swagger_annotations_version}"
+	implementation "org.openapitools:jackson-databind-nullable:${jackson_databind_nullable_version}"
+
+	implementation 'com.github.scribejava:scribejava-core:8.3.1'
+
+	//OpenFeign for external rest calls
+	implementation "io.github.openfeign:feign-core:${feign_version}"
+	implementation "io.github.openfeign:feign-jackson:${feign_version}"
+	implementation "io.github.openfeign:feign-slf4j:${feign_version}"
+	implementation "io.github.openfeign.form:feign-form:${feign_form_version}"
+	implementation "io.github.openfeign:feign-httpclient:${feign_version}"
+	implementation "io.github.openfeign:feign-okhttp:${feign_version}"
+
+	implementation "org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:${oltu_version}"
+
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
@@ -24,8 +56,9 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
-task buildSpotifyClient(type: org.openapitools.generator.gradle.plugin.tasks.GenerateTask) {
-	generatorName = "spring"
+import org.openapitools.generator.gradle.plugin.tasks.GenerateTask
+task buildSpotifyClient(type: GenerateTask) {
+	generatorName = "java"
 	inputSpec = "$rootDir/external-api/open-api-schema.yml".toString()
 	outputDir = "$buildDir/generated/spotify".toString()
 	apiPackage = "com.spotify.api"
@@ -36,12 +69,11 @@ task buildSpotifyClient(type: org.openapitools.generator.gradle.plugin.tasks.Gen
 	generateApiTests = false
 	configOptions = [
 			dateLibrary: 'java8',
-			java8: 'true',
 			interfaceOnly: 'true',
 			serializableModel: 'true',
 			skipDefaultInterface: 'true',
 			useTags: 'true',
-			library: 'spring-cloud'
+			library: 'feign'
 	]
 	onlyIf { !file(outputDir).exists() }
 	doFirst { mkdir outputDir }
